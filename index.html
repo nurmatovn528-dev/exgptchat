@@ -11,16 +11,14 @@
             --bg-color: #0d0d0d;
             --chat-bg: #121212;
             --text-color: #ececec;
-            --accent-color: #00ff88; /* Неоновый зеленый для стиля */
+            --accent-color: #00ff88;
             --user-msg: #2b2d31;
         }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
         
-        /* Экран входа */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .login-box { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); text-align: center; width: 85%; max-width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .login-box input { width: 100%; padding: 14px; margin: 20px 0; border-radius: 12px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; outline: none; transition: 0.3s; }
-        .login-box input:focus { border-color: var(--accent-color); box-shadow: 0 0 10px rgba(0,255,136,0.2); }
+        .login-box input { width: 100%; padding: 14px; margin: 20px 0; border-radius: 12px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; outline: none; }
 
         #app { display: flex; flex-direction: column; height: 100vh; max-width: 1000px; margin: 0 auto; position: relative; background: var(--chat-bg); }
         header { padding: 18px; text-align: center; border-bottom: 1px solid #222; font-weight: 700; letter-spacing: 1px; background: rgba(0,0,0,0.3); }
@@ -30,7 +28,7 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .user-row { flex-direction: row-reverse; }
-        .system-row { justify-content: center; }
+        .system-row { justify-content: center; text-align: center; }
         .avatar { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; background: #333; flex-shrink: 0; font-size: 14px; color: #fff; }
         
         .bubble { max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 15px; line-height: 1.5; position: relative; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
@@ -38,22 +36,22 @@
         .user-bubble { background: var(--user-msg); color: #fff; border-bottom-right-radius: 4px; }
         .ai-bubble { background: #1e1e1e; border: 1px solid #333; border-bottom-left-radius: 4px; }
         
+        /* Статус печати */
+        .status-msg { padding: 5px 20px; font-size: 12px; color: var(--accent-color); display: none; font-style: italic; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+
         .input-area { padding: 20px; background: linear-gradient(to top, #000, transparent); }
-        .input-wrap { display: flex; background: #212121; border-radius: 16px; padding: 8px 12px; border: 1px solid #333; gap: 10px; align-items: center; transition: 0.3s; }
-        .input-wrap:focus-within { border-color: #555; background: #252525; }
+        .input-wrap { display: flex; background: #212121; border-radius: 16px; padding: 8px 12px; border: 1px solid #333; gap: 10px; align-items: center; }
         .input-wrap input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 16px; padding: 8px 0; }
         
         #admin-panel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 4000; }
         #admin-sidebar { width: 220px; border-right: 1px solid #222; overflow-y: auto; background: #0a0a0a; }
         #admin-main { flex: 1; display: flex; flex-direction: column; padding: 25px; background: #0d0d0d; }
-        .chat-tab { padding: 15px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 13px; color: #888; transition: 0.2s; }
-        .chat-tab:hover { background: #111; color: #fff; }
+        .chat-tab { padding: 15px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 13px; color: #888; }
         .chat-tab.active { background: #1a1a1a; color: var(--accent-color); border-left: 3px solid var(--accent-color); }
         
-        .btn { background: var(--accent-color); border: none; color: #000; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn:hover { transform: scale(1.02); filter: brightness(1.1); }
-        .attach-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 22px; transition: 0.2s; padding: 0 5px; }
-        .attach-btn:hover { color: #fff; }
+        .btn { background: var(--accent-color); border: none; color: #000; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .attach-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 22px; }
     </style>
 </head>
 <body>
@@ -61,8 +59,8 @@
 <div id="login-screen">
     <div class="login-box">
         <h1 style="color: var(--accent-color); margin: 0; font-size: 28px;">ExGPT</h1>
-        <p style="font-size: 12px; color: #666; letter-spacing: 2px;">PREMIUM CLOUD / FREE</p>
-        <input type="text" id="user-nick" placeholder="Введите ваш ник..." maxlength="12">
+        <p style="font-size: 12px; color: #666; letter-spacing: 2px;">PREMIUM CLOUD</p>
+        <input type="text" id="user-nick" placeholder="Ваш ник..." maxlength="12">
         <button class="btn" style="width:100%" onclick="initChat()">Начать сессию</button>
     </div>
 </div>
@@ -70,7 +68,7 @@
 <div id="app">
     <header>ExGPT 4.0 <span style="color: var(--accent-color); font-size: 10px; margin-left: 5px;">ONLINE</span></header>
     <div id="chat-window"></div>
-    <div id="status" class="status-msg">GPT печатает...</div>
+    <div id="status" class="status-msg">GPT печатает ответ...</div>
     <div class="input-area">
         <div class="input-wrap">
             <input type="file" id="file-input" style="display:none" accept="image/*" onchange="uploadImage(this)">
@@ -97,8 +95,8 @@
                 Цвет: <input type="color" id="admin-color" value="#00ff88">
                 <label style="font-size:12px;"><input type="checkbox" id="is-sys"> System</label>
             </div>
-            <textarea id="admin-reply-box" style="width:100%; height:80px; background:#000; color:white; border:1px solid #333; border-radius:10px; padding:12px;" placeholder="Введите ответ нейросети..."></textarea>
-            <button class="btn" style="margin-top:15px; width:100%;" onclick="handleAdminReply()">ОТПРАВИТЬ ОТВЕТ</button>
+            <textarea id="admin-reply-box" style="width:100%; height:80px; background:#000; color:white; border:1px solid #333; border-radius:10px; padding:12px;" placeholder="Введите ответ..."></textarea>
+            <button class="btn" style="margin-top:15px; width:100%;" onclick="handleAdminReply()">ОТПРАВИТЬ</button>
         </div>
     </div>
 </div>
@@ -126,6 +124,7 @@
         renderMessages();
         renderAdminTabs();
         renderAdminLog();
+        checkTypingStatus();
     });
 
     function initChat() {
@@ -134,7 +133,14 @@
         currentUserName = nick;
         document.getElementById('login-screen').style.display = 'none';
         if(!allChats[nick]) {
-            sendToDB(nick, 'GPT', 'Привет! Я ExGPT. Чем могу помочь сегодня?', '#00ff88', false, false);
+            sendToDB(nick, 'GPT', 'Привет! Я ExGPT. Чем могу помочь?', '#00ff88', false, false);
+        }
+    }
+
+    function checkTypingStatus() {
+        if(currentUserName && allChats[currentUserName]) {
+            const isTyping = allChats[currentUserName].isTyping;
+            document.getElementById('status').style.display = isTyping ? 'block' : 'none';
         }
     }
 
@@ -145,11 +151,8 @@
     function uploadImage(input) {
         const file = input.files[0];
         if (!file) return;
-        
         const formData = new FormData();
         formData.append("image", file);
-        
-        // Используем новый рабочий API ключ ImgBB
         fetch("https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5", {
             method: "POST",
             body: formData
@@ -159,8 +162,7 @@
             if (res.success) {
                 let color = (currentUserName === 'Aduse17') ? '#00ff88' : '#ececec';
                 sendToDB(currentUserName, currentUserName, res.data.url, color, false, true);
-            } else {
-                alert("Ошибка загрузки фото");
+                db.ref('chats/' + currentUserName + '/isTyping').set(true); // Включаем "печатает"
             }
         });
     }
@@ -172,6 +174,7 @@
         
         let color = (currentUserName === 'Aduse17') ? '#00ff88' : '#ececec';
         sendToDB(currentUserName, currentUserName, txt, color, false, true);
+        db.ref('chats/' + currentUserName + '/isTyping').set(true); // Юзер написал -> GPT печатает
         document.getElementById('user-msg-input').value = "";
     }
 
@@ -182,6 +185,7 @@
         const col = document.getElementById('admin-color').value;
         const sys = document.getElementById('is-sys').checked;
         sendToDB(selectedChat, nick, txt, col, sys, false);
+        db.ref('chats/' + selectedChat + '/isTyping').set(false); // Админ ответил -> GPT закончил
         document.getElementById('admin-reply-box').value = "";
     }
 
@@ -193,19 +197,24 @@
         const win = document.getElementById('chat-window');
         if(!currentUserName || !allChats[currentUserName]) return;
         win.innerHTML = "";
-        Object.values(allChats[currentUserName].messages).forEach(m => {
+        const msgs = allChats[currentUserName].messages || {};
+        Object.values(msgs).forEach(m => {
             const div = document.createElement('div');
             let isAduse = m.sender === 'Aduse17';
             div.className = 'msg-row ' + (m.isUser && !isAduse ? 'user-row' : (m.isSystem ? 'system-row' : ''));
             
             let messageContent = isImgUrl(m.text) ? `<img src="${m.text}">` : m.text;
             
-            div.innerHTML = m.isSystem ? `<div style="color:${m.color}; font-size:12px; opacity:0.7;">${messageContent}</div>` : 
-                `<div class="avatar" style="${(!m.isUser || isAduse) ? 'border: 1px solid '+m.color : 'background:#444'}">${m.sender[0]}</div>
-                 <div class="bubble ${(m.isUser && !isAduse) ? 'user-bubble' : 'ai-bubble'}">
-                    <small style="color:${m.color}; font-weight:bold; font-size:10px;">${(m.isUser && !isAduse)?'Вы':m.sender}</small><br>
+            if(m.isSystem) {
+                div.innerHTML = `<div style="color:${m.color}; font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">${messageContent}</div>`;
+            } else {
+                div.innerHTML = `
+                <div class="avatar" style="${(!m.isUser || isAduse) ? 'border: 1px solid '+m.color : 'background:#444'}">${m.sender[0]}</div>
+                 <div class="bubble ${(m.isUser && !isAduse) ? 'user-bubble' : 'ai-bubble'}" style="${(!m.isUser || isAduse) ? 'color:'+m.color : ''}">
+                    <small style="color:${m.color}; font-weight:bold; font-size:10px; opacity:0.8;">${(m.isUser && !isAduse)?'Вы':m.sender}</small><br>
                     ${messageContent}
                  </div>`;
+            }
             win.appendChild(div);
         });
         win.scrollTop = win.scrollHeight;
@@ -227,14 +236,15 @@
         const log = document.getElementById('admin-log');
         if(!selectedChat || !allChats[selectedChat]) return;
         log.innerHTML = "";
-        Object.values(allChats[selectedChat].messages).forEach(m => {
+        const msgs = allChats[selectedChat].messages || {};
+        Object.values(msgs).forEach(m => {
             let line = isImgUrl(m.text) ? "[IMAGE_FILE]" : m.text;
             log.innerHTML += `<div style="color:${m.isUser?'#4dabff':m.color}; margin-bottom:5px;">[${m.sender}]: ${line}</div>`;
         });
         log.scrollTop = log.scrollHeight;
     }
 
-    function clearCloud() { if(confirm("ВНИМАНИЕ! Это удалит все переписки. Продолжить?")) db.ref('/').remove(); }
+    function clearCloud() { if(confirm("Удалить всё?")) db.ref('/').remove(); }
     function closeAdmin() { document.getElementById('admin-panel').style.display = 'none'; }
 </script>
 </body>
