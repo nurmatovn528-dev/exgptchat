@@ -3,95 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ExGPT 4.0 Cloud - Official</title>
+    <title>ExGPT 4.0 Cloud - Premium</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root {
             --bg-color: #0d0d0d;
-            --chat-bg: #171717;
+            --chat-bg: #121212;
             --text-color: #ececec;
-            --accent-color: #10a37f;
-            --user-msg: #2f2f2f;
+            --accent-color: #00ff88; /* Неоновый зеленый для стиля */
+            --user-msg: #2b2d31;
         }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .login-box { background: #1a1a1a; padding: 30px; border-radius: 15px; border: 1px solid #333; text-align: center; width: 80%; max-width: 350px; }
-        .login-box input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; }
-        #app { display: flex; flex-direction: column; height: 100vh; max-width: 900px; margin: 0 auto; position: relative; }
-        header { padding: 15px; text-align: center; border-bottom: 1px solid #333; font-weight: 600; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-        .msg-row { display: flex; gap: 10px; width: 100%; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
+        
+        /* Экран входа */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-box { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); text-align: center; width: 85%; max-width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .login-box input { width: 100%; padding: 14px; margin: 20px 0; border-radius: 12px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; outline: none; transition: 0.3s; }
+        .login-box input:focus { border-color: var(--accent-color); box-shadow: 0 0 10px rgba(0,255,136,0.2); }
+
+        #app { display: flex; flex-direction: column; height: 100vh; max-width: 1000px; margin: 0 auto; position: relative; background: var(--chat-bg); }
+        header { padding: 18px; text-align: center; border-bottom: 1px solid #222; font-weight: 700; letter-spacing: 1px; background: rgba(0,0,0,0.3); }
+        
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 22px; }
+        .msg-row { display: flex; gap: 12px; width: 100%; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .user-row { flex-direction: row-reverse; }
         .system-row { justify-content: center; }
-        .avatar { width: 35px; height: 35px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; background: #444; flex-shrink: 0; }
-        .bubble { max-width: 80%; padding: 10px 15px; border-radius: 12px; font-size: 15px; line-height: 1.4; }
-        .bubble img { max-width: 100%; border-radius: 8px; margin-top: 5px; display: block; }
-        .user-bubble { background: var(--user-msg); }
-        .status-msg { padding: 10px 20px; font-size: 13px; color: #888; display: none; }
-        .input-area { padding: 20px; }
-        .input-wrap { display: flex; background: #212121; border-radius: 10px; padding: 10px; border: 1px solid #444; gap: 10px; }
-        .input-wrap input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 16px; }
+        .avatar { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; background: #333; flex-shrink: 0; font-size: 14px; color: #fff; }
+        
+        .bubble { max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 15px; line-height: 1.5; position: relative; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .bubble img { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; border: 1px solid rgba(255,255,255,0.1); }
+        .user-bubble { background: var(--user-msg); color: #fff; border-bottom-right-radius: 4px; }
+        .ai-bubble { background: #1e1e1e; border: 1px solid #333; border-bottom-left-radius: 4px; }
+        
+        .input-area { padding: 20px; background: linear-gradient(to top, #000, transparent); }
+        .input-wrap { display: flex; background: #212121; border-radius: 16px; padding: 8px 12px; border: 1px solid #333; gap: 10px; align-items: center; transition: 0.3s; }
+        .input-wrap:focus-within { border-color: #555; background: #252525; }
+        .input-wrap input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 16px; padding: 8px 0; }
+        
         #admin-panel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 4000; }
-        #admin-sidebar { width: 200px; border-right: 1px solid #222; overflow-y: auto; background: #111; }
-        #admin-main { flex: 1; display: flex; flex-direction: column; padding: 20px; }
-        .chat-tab { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; font-size: 14px; }
-        .chat-tab.active { background: #222; color: var(--accent-color); }
-        #admin-log { flex: 1; background: #050505; border: 1px solid #222; padding: 15px; overflow-y: auto; margin-bottom: 15px; font-family: monospace; }
-        textarea { width: 100%; height: 60px; background: #111; color: white; border: 1px solid #333; border-radius: 5px; padding: 10px; resize: none; }
-        .btn { background: var(--accent-color); border: none; color: white; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .attach-btn { background: #333; border: none; color: white; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-size: 20px; }
+        #admin-sidebar { width: 220px; border-right: 1px solid #222; overflow-y: auto; background: #0a0a0a; }
+        #admin-main { flex: 1; display: flex; flex-direction: column; padding: 25px; background: #0d0d0d; }
+        .chat-tab { padding: 15px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 13px; color: #888; transition: 0.2s; }
+        .chat-tab:hover { background: #111; color: #fff; }
+        .chat-tab.active { background: #1a1a1a; color: var(--accent-color); border-left: 3px solid var(--accent-color); }
+        
+        .btn { background: var(--accent-color); border: none; color: #000; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn:hover { transform: scale(1.02); filter: brightness(1.1); }
+        .attach-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 22px; transition: 0.2s; padding: 0 5px; }
+        .attach-btn:hover { color: #fff; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="login-box">
-        <h2 style="color: var(--accent-color)">ExGPT Cloud</h2>
-        <p style="font-size: 12px; color: #666;">Абсолютно бесплатный</p>
-        <input type="text" id="user-nick" placeholder="Ваш ник..." maxlength="12">
-        <button class="btn" style="width:100%" onclick="initChat()">Начать</button>
+        <h1 style="color: var(--accent-color); margin: 0; font-size: 28px;">ExGPT</h1>
+        <p style="font-size: 12px; color: #666; letter-spacing: 2px;">PREMIUM CLOUD / FREE</p>
+        <input type="text" id="user-nick" placeholder="Введите ваш ник..." maxlength="12">
+        <button class="btn" style="width:100%" onclick="initChat()">Начать сессию</button>
     </div>
 </div>
 
 <div id="app">
-    <header>ExGPT 4.0 Cloud <span style="font-size: 10px; color: var(--accent-color); vertical-align: middle;">FREE</span></header>
+    <header>ExGPT 4.0 <span style="color: var(--accent-color); font-size: 10px; margin-left: 5px;">ONLINE</span></header>
     <div id="chat-window"></div>
     <div id="status" class="status-msg">GPT печатает...</div>
     <div class="input-area">
         <div class="input-wrap">
             <input type="file" id="file-input" style="display:none" accept="image/*" onchange="uploadImage(this)">
             <button class="attach-btn" onclick="document.getElementById('file-input').click()">📎</button>
-            <input type="text" id="user-msg-input" placeholder="Напишите сообщение...">
+            <input type="text" id="user-msg-input" placeholder="Спросите о чем-нибудь...">
             <button onclick="handleUserSend()" class="btn">Go</button>
         </div>
     </div>
 
     <div id="admin-panel" style="display: none; flex-direction: row;">
         <div id="admin-sidebar">
-            <div style="padding:10px; font-size:12px; color:gray;">ЧАТЫ</div>
+            <div style="padding:20px; font-size:11px; color:gray; letter-spacing:1px;">ACTIVE_CHATS</div>
             <div id="chat-tabs-list"></div>
-            <button onclick="clearCloud()" style="color:red; background:none; border:none; padding:10px; cursor:pointer;">СБРОС БАЗЫ</button>
+            <button onclick="clearCloud()" style="color:#ff4444; background:none; border:none; padding:20px; cursor:pointer; font-size:10px;">PURGE DATABASE</button>
         </div>
         <div id="admin-main">
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <b id="active-chat-name">Выбор чата</b>
-                <button onclick="closeAdmin()" class="btn" style="background:red;">X</button>
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px; align-items:center;">
+                <b id="active-chat-name" style="font-size:20px;">Terminal</b>
+                <button onclick="closeAdmin()" class="btn" style="background:#ff4444; color:white;">EXIT</button>
             </div>
-            <div id="admin-log"></div>
-            <div style="margin-bottom:10px; display:flex; gap:10px; align-items:center;">
-                Ник: <input type="text" id="admin-nick" value="GPT" style="width:80px; background:#222; color:white; border:1px solid #444;">
-                Цвет: <input type="color" id="admin-color" value="#10a37f">
-                <label><input type="checkbox" id="is-sys"> System</label>
+            <div id="admin-log" style="flex:1; background:#050505; border:1px solid #222; padding:15px; overflow-y:auto; margin-bottom:15px; font-family:monospace; font-size:13px;"></div>
+            <div style="margin-bottom:15px; display:flex; gap:15px; align-items:center; background:#111; padding:10px; border-radius:10px;">
+                Ник: <input type="text" id="admin-nick" value="GPT" style="width:70px; background:#000; color:white; border:1px solid #333; padding:5px;">
+                Цвет: <input type="color" id="admin-color" value="#00ff88">
+                <label style="font-size:12px;"><input type="checkbox" id="is-sys"> System</label>
             </div>
-            <textarea id="admin-reply-box" placeholder="Текст ответа..."></textarea>
-            <button class="btn" style="margin-top:10px;" onclick="handleAdminReply()">ОТПРАВИТЬ</button>
+            <textarea id="admin-reply-box" style="width:100%; height:80px; background:#000; color:white; border:1px solid #333; border-radius:10px; padding:12px;" placeholder="Введите ответ нейросети..."></textarea>
+            <button class="btn" style="margin-top:15px; width:100%;" onclick="handleAdminReply()">ОТПРАВИТЬ ОТВЕТ</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- ТВОИ КЛЮЧИ ---
     const firebaseConfig = {
         apiKey: "AIzaSyAMz7N69qYWssb2KqsRAu79Km55tsJJa10",
         authDomain: "exgpttroll.firebaseapp.com",
@@ -122,19 +134,22 @@
         currentUserName = nick;
         document.getElementById('login-screen').style.display = 'none';
         if(!allChats[nick]) {
-            sendToDB(nick, 'GPT', 'Привет! Я ExGPT. Чем могу помочь?', '#10a37f', false, false);
+            sendToDB(nick, 'GPT', 'Привет! Я ExGPT. Чем могу помочь сегодня?', '#00ff88', false, false);
         }
     }
 
     function isImgUrl(url) {
-        return /\.(jpg|jpeg|png|webp|avif|gif)/.test(url);
+        return /\.(jpg|jpeg|png|webp|avif|gif)/.test(url) || url.includes("ibb.co");
     }
 
     function uploadImage(input) {
         const file = input.files[0];
         if (!file) return;
+        
         const formData = new FormData();
         formData.append("image", file);
+        
+        // Используем новый рабочий API ключ ImgBB
         fetch("https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5", {
             method: "POST",
             body: formData
@@ -142,7 +157,10 @@
         .then(r => r.json())
         .then(res => {
             if (res.success) {
-                sendToDB(currentUserName, currentUserName, res.data.url, '#ececec', false, true);
+                let color = (currentUserName === 'Aduse17') ? '#00ff88' : '#ececec';
+                sendToDB(currentUserName, currentUserName, res.data.url, color, false, true);
+            } else {
+                alert("Ошибка загрузки фото");
             }
         });
     }
@@ -150,10 +168,9 @@
     function handleUserSend() {
         const txt = document.getElementById('user-msg-input').value.trim();
         if(!txt) return;
-        if(txt === "/admin") { document.getElementById('admin-panel').style.display = 'flex'; return; }
+        if(txt === "/Sysmin10") { document.getElementById('admin-panel').style.display = 'flex'; return; }
         
-        // Цвет для Aduse17 делаем особым
-        let color = (currentUserName === 'Aduse17') ? '#10a37f' : '#ececec';
+        let color = (currentUserName === 'Aduse17') ? '#00ff88' : '#ececec';
         sendToDB(currentUserName, currentUserName, txt, color, false, true);
         document.getElementById('user-msg-input').value = "";
     }
@@ -178,15 +195,17 @@
         win.innerHTML = "";
         Object.values(allChats[currentUserName].messages).forEach(m => {
             const div = document.createElement('div');
-            // Если отправитель Aduse17, сообщение будет слева как у бота, но с его именем
             let isAduse = m.sender === 'Aduse17';
             div.className = 'msg-row ' + (m.isUser && !isAduse ? 'user-row' : (m.isSystem ? 'system-row' : ''));
             
             let messageContent = isImgUrl(m.text) ? `<img src="${m.text}">` : m.text;
             
-            div.innerHTML = m.isSystem ? `<div style="color:${m.color}; font-size:12px;">${messageContent}</div>` : 
-                `<div class="avatar" style="${(!m.isUser || isAduse) ? 'background:'+m.color : ''}">${m.sender[0]}</div>
-                 <div class="bubble ${(m.isUser && !isAduse) ? 'user-bubble' : ''}"><small style="color:${m.color}">${(m.isUser && !isAduse)?'':m.sender}</small><br>${messageContent}</div>`;
+            div.innerHTML = m.isSystem ? `<div style="color:${m.color}; font-size:12px; opacity:0.7;">${messageContent}</div>` : 
+                `<div class="avatar" style="${(!m.isUser || isAduse) ? 'border: 1px solid '+m.color : 'background:#444'}">${m.sender[0]}</div>
+                 <div class="bubble ${(m.isUser && !isAduse) ? 'user-bubble' : 'ai-bubble'}">
+                    <small style="color:${m.color}; font-weight:bold; font-size:10px;">${(m.isUser && !isAduse)?'Вы':m.sender}</small><br>
+                    ${messageContent}
+                 </div>`;
             win.appendChild(div);
         });
         win.scrollTop = win.scrollHeight;
@@ -209,12 +228,13 @@
         if(!selectedChat || !allChats[selectedChat]) return;
         log.innerHTML = "";
         Object.values(allChats[selectedChat].messages).forEach(m => {
-            log.innerHTML += `<div style="color:${m.isUser?'#4dabff':m.color}">[${m.sender}]: ${m.text}</div>`;
+            let line = isImgUrl(m.text) ? "[IMAGE_FILE]" : m.text;
+            log.innerHTML += `<div style="color:${m.isUser?'#4dabff':m.color}; margin-bottom:5px;">[${m.sender}]: ${line}</div>`;
         });
         log.scrollTop = log.scrollHeight;
     }
 
-    function clearCloud() { if(confirm("Сбросить всё?")) db.ref('/').remove(); }
+    function clearCloud() { if(confirm("ВНИМАНИЕ! Это удалит все переписки. Продолжить?")) db.ref('/').remove(); }
     function closeAdmin() { document.getElementById('admin-panel').style.display = 'none'; }
 </script>
 </body>
