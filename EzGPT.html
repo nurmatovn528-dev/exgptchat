@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ExGPT 4.0 Cloud - Ready</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --chat-bg: #171717;
+            --text-color: #ececec;
+            --accent-color: #10a37f;
+            --user-msg: #2f2f2f;
+        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-box { background: #1a1a1a; padding: 30px; border-radius: 15px; border: 1px solid #333; text-align: center; width: 80%; max-width: 350px; }
+        .login-box input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; }
+        #app { display: flex; flex-direction: column; height: 100vh; max-width: 900px; margin: 0 auto; position: relative; }
+        header { padding: 15px; text-align: center; border-bottom: 1px solid #333; font-weight: 600; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .msg-row { display: flex; gap: 10px; width: 100%; }
+        .user-row { flex-direction: row-reverse; }
+        .system-row { justify-content: center; }
+        .avatar { width: 35px; height: 35px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; background: #444; flex-shrink: 0; }
+        .bubble { max-width: 80%; padding: 10px 15px; border-radius: 12px; font-size: 15px; line-height: 1.4; }
+        .user-bubble { background: var(--user-msg); }
+        .status-msg { padding: 10px 20px; font-size: 13px; color: #888; display: none; }
+        .input-area { padding: 20px; }
+        .input-wrap { display: flex; background: #212121; border-radius: 10px; padding: 10px; border: 1px solid #444; }
+        .input-wrap input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 16px; }
+        #admin-panel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 4000; }
+        #admin-sidebar { width: 200px; border-right: 1px solid #222; overflow-y: auto; background: #111; }
+        #admin-main { flex: 1; display: flex; flex-direction: column; padding: 20px; }
+        .chat-tab { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; font-size: 14px; }
+        .chat-tab.active { background: #222; color: var(--accent-color); }
+        #admin-log { flex: 1; background: #050505; border: 1px solid #222; padding: 15px; overflow-y: auto; margin-bottom: 15px; font-family: monospace; }
+        textarea { width: 100%; height: 60px; background: #111; color: white; border: 1px solid #333; border-radius: 5px; padding: 10px; resize: none; }
+        .btn { background: var(--accent-color); border: none; color: white; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-box">
+        <h2 style="color: var(--accent-color)">ExGPT Cloud</h2>
+        <input type="text" id="user-nick" placeholder="Ваш ник..." maxlength="12">
+        <button class="btn" style="width:100%" onclick="initChat()">Начать</button>
+    </div>
+</div>
+
+<div id="app">
+    <header>ExGPT 2.0</header>
+    <div id="chat-window"></div>
+    <div id="status" class="status-msg">GPT печатает...</div>
+    <div class="input-area">
+        <div class="input-wrap">
+            <input type="text" id="user-msg-input" placeholder="Напишите сообщение...">
+            <button onclick="handleUserSend()" class="btn">Go</button>
+        </div>
+    </div>
+
+    <div id="admin-panel" style="display: none; flex-direction: row;">
+        <div id="admin-sidebar">
+            <div style="padding:10px; font-size:12px; color:gray;">ЧАТЫ</div>
+            <div id="chat-tabs-list"></div>
+            <button onclick="clearCloud()" style="color:red; background:none; border:none; padding:10px; cursor:pointer;">СБРОС БАЗЫ</button>
+        </div>
+        <div id="admin-main">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <b id="active-chat-name">Выбор чата</b>
+                <button onclick="closeAdmin()" class="btn" style="background:red;">X</button>
+            </div>
+            <div id="admin-log"></div>
+            <div style="margin-bottom:10px; display:flex; gap:10px; align-items:center;">
+                Ник: <input type="text" id="admin-nick" value="GPT" style="width:80px; background:#222; color:white; border:1px solid #444;">
+                Цвет: <input type="color" id="admin-color" value="#10a37f">
+                <label><input type="checkbox" id="is-sys"> System</label>
+            </div>
+            <textarea id="admin-reply-box" placeholder="Текст ответа..."></textarea>
+            <button class="btn" style="margin-top:10px;" onclick="handleAdminReply()">ОТПРАВИТЬ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ТВОИ КЛЮЧИ ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAMz7N69qYWssb2KqsRAu79Km55tsJJa10",
+        authDomain: "exgpttroll.firebaseapp.com",
+        databaseURL: "https://exgpttroll-default-rtdb.firebaseio.com",
+        projectId: "exgpttroll",
+        storageBucket: "exgpttroll.firebasestorage.app",
+        messagingSenderId: "957855627150",
+        appId: "1:957855627150:web:2350a1345a290dd60f16df"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let currentUserName = "";
+    let allChats = {};
+    let selectedChat = null;
+
+    // Слушаем данные
+    db.ref('chats').on('value', (snap) => {
+        allChats = snap.val() || {};
+        renderMessages();
+        renderAdminTabs();
+        renderAdminLog();
+    });
+
+    function initChat() {
+        const nick = document.getElementById('user-nick').value.trim();
+        if(!nick) return;
+        currentUserName = nick;
+        document.getElementById('login-screen').style.display = 'none';
+        if(!allChats[nick]) {
+            sendToDB(nick, 'GPT', 'Привет! Я ExGPT. Чем могу помочь?', '#10a37f', false, false);
+        }
+    }
+
+    function handleUserSend() {
+        const txt = document.getElementById('user-msg-input').value.trim();
+        if(!txt) return;
+        if(txt === "/admin") { document.getElementById('admin-panel').style.display = 'flex'; return; }
+        sendToDB(currentUserName, currentUserName, txt, '#ececec', false, true);
+        document.getElementById('user-msg-input').value = "";
+    }
+
+    function handleAdminReply() {
+        const txt = document.getElementById('admin-reply-box').value.trim();
+        if(!txt || !selectedChat) return;
+        const nick = document.getElementById('admin-nick').value;
+        const col = document.getElementById('admin-color').value;
+        const sys = document.getElementById('is-sys').checked;
+        sendToDB(selectedChat, nick, txt, col, sys, false);
+        document.getElementById('admin-reply-box').value = "";
+    }
+
+    function sendToDB(chat, sender, text, color, isSystem, isUser) {
+        db.ref('chats/' + chat + '/messages').push({ sender, text, color, isSystem, isUser });
+    }
+
+    function renderMessages() {
+        const win = document.getElementById('chat-window');
+        if(!currentUserName || !allChats[currentUserName]) return;
+        win.innerHTML = "";
+        Object.values(allChats[currentUserName].messages).forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'msg-row ' + (m.isUser ? 'user-row' : (m.isSystem ? 'system-row' : ''));
+            div.innerHTML = m.isSystem ? `<div style="color:${m.color}; font-size:12px;">${m.text}</div>` : 
+                `<div class="avatar" style="${!m.isUser ? 'background:'+m.color : ''}">${m.sender[0]}</div>
+                 <div class="bubble ${m.isUser ? 'user-bubble' : ''}"><small style="color:${m.color}">${m.isUser?'':m.sender}</small><br>${m.text}</div>`;
+            win.appendChild(div);
+        });
+        win.scrollTop = win.scrollHeight;
+    }
+
+    function renderAdminTabs() {
+        const list = document.getElementById('chat-tabs-list');
+        list.innerHTML = "";
+        Object.keys(allChats).forEach(name => {
+            const d = document.createElement('div');
+            d.className = 'chat-tab ' + (selectedChat === name ? 'active' : '');
+            d.innerText = name;
+            d.onclick = () => { selectedChat = name; document.getElementById('active-chat-name').innerText = name; renderAdminTabs(); renderAdminLog(); };
+            list.appendChild(d);
+        });
+    }
+
+    function renderAdminLog() {
+        const log = document.getElementById('admin-log');
+        if(!selectedChat || !allChats[selectedChat]) return;
+        log.innerHTML = "";
+        Object.values(allChats[selectedChat].messages).forEach(m => {
+            log.innerHTML += `<div style="color:${m.isUser?'#4dabff':m.color}">[${m.sender}]: ${m.text}</div>`;
+        });
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function clearCloud() { if(confirm("Сбросить всё?")) db.ref('/').remove(); }
+    function closeAdmin() { document.getElementById('admin-panel').style.display = 'none'; }
+</script>
+</body>
+</html>
