@@ -32,7 +32,7 @@ html,body{margin:0;height:100%;background:#080808;color:#e0e0e0;font-family:sans
     <h3 style="color:#00ff88;margin-top:0">Secure Access</h3>
     <input id="i1" placeholder="Identifier">
     <input id="i2" type="password" placeholder="Key">
-    <button class="btn" onclick="L()">CONNECT</button>
+    <button class="btn" onclick="LOGIN()">CONNECT</button>
   </div>
 </div>
 
@@ -43,11 +43,11 @@ html,body{margin:0;height:100%;background:#080808;color:#e0e0e0;font-family:sans
       <div id="chat"></div>
       <div id="inp">
         <input id="m" placeholder="Message...">
-        <button class="btn" style="width:auto" onclick="S()">GO</button>
+        <button class="btn" style="width:auto" onclick="SEND()">GO</button>
       </div>
       <div id="ctl">
         <input id="b" placeholder="Target" style="background:#000;color:#fff;border:1px solid #333;padding:8px;border-radius:6px">
-        <button class="btn" style="width:auto;padding:8px 16px" onclick="B()">BAN</button>
+        <button class="btn" style="width:auto;padding:8px 16px" onclick="BAN()">BAN</button>
       </div>
     </div>
   </div>
@@ -58,66 +58,67 @@ firebase.initializeApp({
   apiKey:"AIzaSyAMz7N69qYWssb2KqsRAu79Km55tsJJa10",
   databaseURL:"https://exgpttroll-default-rtdb.firebaseio.com"
 });
-const D=firebase.database();
+const DB=firebase.database();
 
-let U="",C=null,FLAG=0;
+let USER="",CHAT=null,ADMIN=false;
 
-/* ----------- АНТИ‑DEVTOOLS (демотивация) ----------- */
+/* анти‑devtools (психологический) */
 setInterval(()=>{
   if(Math.abs(window.outerWidth-window.innerWidth)>160){
-    document.body.innerHTML="<h2 style='color:red;text-align:center;margin-top:20%'>SECURITY ERROR</h2>";
+    document.body.innerHTML="<h2 style='color:red;text-align:center;margin-top:20%'>SECURITY VIOLATION</h2>";
   }
-},1200);
+},1500);
 
-/* ----------- ОБФУСКАЦИЯ ----------- */
-const Z=[81,87,82,49,99,50,85,120,78,119,61,61];
-const Y=[90,88,104,108,82,48,116,108,101,86,61];
-function R(a){return a.map(x=>String.fromCharCode(x)).join("")}
-function M(a,b){return btoa(a.split("").reverse().join(""))===b}
+/* скрытые данные */
+const A=[65,100,117,115,101,49,55];        // Aduse17
+const P=[101,120,101,71,75,101,121,81];   // exeGKeyQ
+const STR=a=>a.map(x=>String.fromCharCode(x)).join("");
 
-/* ----------- LOGIN ----------- */
-function L(){
-  const a=i1.value.trim(),b=i2.value;
-  if(!a||!b)return;
-  D.ref("bans/"+a).once("value",s=>{
+function LOGIN(){
+  const u=i1.value.trim();
+  const p=i2.value;
+  if(!u||!p)return;
+
+  DB.ref("bans/"+u).once("value",s=>{
     if(s.exists())return alert("ACCESS DENIED");
-    U=a;
-    FLAG=(M(a,R(Z))&&M(b,R(Y)))?1:0;
+
+    USER=u;
+    ADMIN=(u===STR(A) && p===STR(P));
+
     lock.style.display="none";
     app.style.display="block";
-    if(FLAG){
+
+    if(ADMIN){
       ctl.style.display="block";
-      LS();
+      LOAD_CHATS();
     }else{
       side.style.display="none";
-      C=a;
-      H(a);
-      D.ref("chats/"+a).once("value",x=>{
-        if(!x.exists())D.ref("chats/"+a).push({s:"GPT",t:"Connection established."});
+      CHAT=u;
+      LISTEN(u);
+      DB.ref("chats/"+u).once("value",x=>{
+        if(!x.exists())DB.ref("chats/"+u).push({s:"GPT",t:"Connection established."});
       });
     }
   });
 }
 
-/* ----------- ADMIN VIEW ----------- */
-function LS(){
-  D.ref("chats").on("value",s=>{
+function LOAD_CHATS(){
+  DB.ref("chats").on("value",s=>{
     side.innerHTML="<div style='padding:10px;font-size:10px;color:#555'>ACTIVE</div>";
     Object.keys(s.val()||{}).forEach(k=>{
       const d=document.createElement("div");
-      d.className="tab"+(k===C?" a":"");
+      d.className="tab"+(k===CHAT?" a":"");
       d.textContent=k;
-      d.onclick=()=>{C=k;H(k);LS()};
+      d.onclick=()=>{CHAT=k;LISTEN(k)};
       side.appendChild(d);
     });
   });
 }
 
-/* ----------- CHAT ----------- */
-function H(c){
+function LISTEN(c){
   chat.innerHTML="";
-  D.ref("chats/"+c).off();
-  D.ref("chats/"+c).on("value",s=>{
+  DB.ref("chats/"+c).off();
+  DB.ref("chats/"+c).on("value",s=>{
     chat.innerHTML="";
     Object.values(s.val()||{}).forEach(m=>{
       const d=document.createElement("div");
@@ -129,21 +130,20 @@ function H(c){
   });
 }
 
-function S(){
-  if(!C)return;
+function SEND(){
+  if(!CHAT)return;
   const t=m.value.trim();
   if(!t)return;
-  D.ref("chats/"+C).push({s:FLAG?"GPT":U,t});
+  DB.ref("chats/"+CHAT).push({s:ADMIN?"GPT":USER,t});
   m.value="";
 }
 
-/* ----------- BAN ----------- */
-function B(){
-  if(!FLAG)return;
+function BAN(){
+  if(!ADMIN)return;
   const x=b.value.trim();
   if(!x)return;
-  D.ref("bans/"+x).set(true);
-  D.ref("chats/"+x).remove();
+  DB.ref("bans/"+x).set(true);
+  DB.ref("chats/"+x).remove();
   alert("TARGET DISABLED");
 }
 </script>
