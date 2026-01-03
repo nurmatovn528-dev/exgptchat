@@ -10,8 +10,8 @@
 html,body{margin:0;height:100%;background:#080808;color:#e0e0e0;font-family:sans-serif;overflow:hidden}
 #lock{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:999}
 .card{background:#111;padding:40px;border-radius:20px;width:300px;border:1px solid #222;text-align:center}
-.card input{width:100%;margin:10px 0;padding:12px;border-radius:10px;border:1px solid #333;background:#000;color:#fff}
-.btn{background:#00ff88;border:none;padding:10px;border-radius:10px;font-weight:bold;width:100%;cursor:pointer}
+.card input{width:100%;margin:10px 0;padding:12px;border-radius:10px;border:1px solid #333;background:#000;color:#fff;outline:none}
+.btn{background:#00ff88;border:none;padding:10px;border-radius:10px;font-weight:bold;width:100%;cursor:pointer;color:#000}
 #app{display:none;height:100%}
 #w{display:flex;height:100%}
 #side{width:220px;background:#050505;border-right:1px solid #222;overflow-y:auto}
@@ -20,12 +20,15 @@ html,body{margin:0;height:100%;background:#080808;color:#e0e0e0;font-family:sans
 #main{flex:1;display:flex;flex-direction:column}
 #chat{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
 .msg{background:#1a1a1a;padding:10px 14px;border-radius:12px;max-width:80%}
-#inp{display:flex;gap:10px;padding:15px;border-top:1px solid #222}
+#inp{display:flex;gap:10px;padding:15px;border-top:1px solid #222;background:#080808}
 #inp input{flex:1;background:#000;border:1px solid #333;color:#fff;padding:10px;border-radius:10px}
 #ctl{display:none;padding:15px;border-top:2px solid #00ff88;background:#111}
+#sec-lock{position:fixed;inset:0;background:#000;color:red;display:none;align-items:center;justify-content:center;z-index:9999;font-size:22px;text-align:center;}
 </style>
 </head>
 <body>
+
+<div id="sec-lock">SECURITY LOCKED<br>ACCESS TERMINATED</div>
 
 <div id="lock">
   <div class="card">
@@ -43,7 +46,7 @@ html,body{margin:0;height:100%;background:#080808;color:#e0e0e0;font-family:sans
       <div id="chat"></div>
       <div id="inp">
         <input id="m" placeholder="Message...">
-        <button class="btn" style="width:auto" onclick="SEND()">GO</button>
+        <button class="btn" style="width:auto;padding:0 20px" onclick="SEND()">GO</button>
       </div>
       <div id="ctl">
         <input id="b" placeholder="Target" style="background:#000;color:#fff;border:1px solid #333;padding:8px;border-radius:6px">
@@ -55,32 +58,44 @@ html,body{margin:0;height:100%;background:#080808;color:#e0e0e0;font-family:sans
 
 <script>
 firebase.initializeApp({
-  apiKey:"AIzaSyAMz7N69qYWssb2KqsRAu79Km55tsJJa10",
-  databaseURL:"https://exgpttroll-default-rtdb.firebaseio.com"
+  apiKey: "AIzaSyAMz7N69qYWssb2KqsRAu79Km55tsJJa10",
+  databaseURL: "https://exgpttroll-default-rtdb.firebaseio.com"
 });
-const DB=firebase.database();
+const DB = firebase.database();
 
-let USER="",CHAT=null,ADMIN=false;
+let USER="", CHAT=null, ADMIN=false, LOCKED=false;
 
-/* анти‑devtools (психологический) */
+const A=[65,100,117,115,101,49,55];
+const P=[101,120,101,71,75,101,121,81];
+const STR=a=>a.map(x=>String.fromCharCode(x)).join("");
+
+function SECURITY_LOCK(){
+  if(LOCKED || ADMIN) return;
+  LOCKED=true;
+  document.getElementById("sec-lock").style.display="flex";
+}
+
 setInterval(()=>{
-  if(Math.abs(window.outerWidth-window.innerWidth)>160){
-    document.body.innerHTML="<h2 style='color:red;text-align:center;margin-top:20%'>SECURITY VIOLATION</h2>";
+  if(!ADMIN && Math.abs(window.outerWidth-window.innerWidth)>160){
+    SECURITY_LOCK();
   }
 },1500);
 
-/* скрытые данные */
-const A=[65,100,117,115,101,49,55];        // Aduse17
-const P=[101,120,101,71,75,101,121,81];   // exeGKeyQ
-const STR=a=>a.map(x=>String.fromCharCode(x)).join("");
+document.addEventListener("keydown",e=>{
+  if(ADMIN) return;
+  if(e.key==="F12" || (e.ctrlKey && e.shiftKey && ["I","J"].includes(e.key)) || (e.ctrlKey && e.key==="U")){
+    e.preventDefault();
+    SECURITY_LOCK();
+  }
+});
 
 function LOGIN(){
   const u=i1.value.trim();
   const p=i2.value;
-  if(!u||!p)return;
+  if(!u||!p) return;
 
   DB.ref("bans/"+u).once("value",s=>{
-    if(s.exists())return alert("ACCESS DENIED");
+    if(s.exists()) return alert("ACCESS DENIED");
 
     USER=u;
     ADMIN=(u===STR(A) && p===STR(P));
@@ -96,7 +111,9 @@ function LOGIN(){
       CHAT=u;
       LISTEN(u);
       DB.ref("chats/"+u).once("value",x=>{
-        if(!x.exists())DB.ref("chats/"+u).push({s:"GPT",t:"Connection established."});
+        if(!x.exists()){
+          DB.ref("chats/"+u).push({s:"GPT",t:"Connection established."});
+        }
       });
     }
   });
@@ -109,39 +126,39 @@ function LOAD_CHATS(){
       const d=document.createElement("div");
       d.className="tab"+(k===CHAT?" a":"");
       d.textContent=k;
-      d.onclick=()=>{CHAT=k;LISTEN(k)};
+      d.onclick=()=>{CHAT=k;LISTEN(k);LOAD_CHATS()};
       side.appendChild(d);
     });
   });
 }
 
 function LISTEN(c){
-  chat.innerHTML="";
+  const win = document.getElementById("chat");
   DB.ref("chats/"+c).off();
   DB.ref("chats/"+c).on("value",s=>{
-    chat.innerHTML="";
+    win.innerHTML="";
     Object.values(s.val()||{}).forEach(m=>{
-      const d=document.createElement("div");
+      const d = document.createElement("div");
       d.className="msg";
       d.innerHTML="<b style='color:#00ff88'>"+m.s+":</b> "+m.t;
-      chat.appendChild(d);
+      win.appendChild(d);
     });
-    chat.scrollTop=chat.scrollHeight;
+    win.scrollTop=win.scrollHeight;
   });
 }
 
 function SEND(){
-  if(!CHAT)return;
+  if(!CHAT) return;
   const t=m.value.trim();
-  if(!t)return;
-  DB.ref("chats/"+CHAT).push({s:ADMIN?"GPT":USER,t});
+  if(!t) return;
+  DB.ref("chats/"+CHAT).push({s:ADMIN?"GPT":USER,t:t});
   m.value="";
 }
 
 function BAN(){
-  if(!ADMIN)return;
+  if(!ADMIN) return;
   const x=b.value.trim();
-  if(!x)return;
+  if(!x) return;
   DB.ref("bans/"+x).set(true);
   DB.ref("chats/"+x).remove();
   alert("TARGET DISABLED");
