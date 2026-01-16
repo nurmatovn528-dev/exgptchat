@@ -1,168 +1,742 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>ExGPT Secure Node</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-<style>
-html,body{margin:0;height:100%;background:#080808;color:#e0e0e0;font-family:sans-serif;overflow:hidden}
-#lock{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:999}
-.card{background:#111;padding:40px;border-radius:20px;width:300px;border:1px solid #222;text-align:center}
-.card input{width:100%;margin:10px 0;padding:12px;border-radius:10px;border:1px solid #333;background:#000;color:#fff;outline:none}
-.btn{background:#00ff88;border:none;padding:10px;border-radius:10px;font-weight:bold;width:100%;cursor:pointer;color:#000}
-#app{display:none;height:100%}
-#w{display:flex;height:100%}
-#side{width:220px;background:#050505;border-right:1px solid #222;overflow-y:auto}
-.tab{padding:14px;border-bottom:1px solid #111;color:#888;cursor:pointer}
-.tab.a{background:#111;color:#00ff88;border-left:3px solid #00ff88}
-#main{flex:1;display:flex;flex-direction:column}
-#chat{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
-.msg{background:#1a1a1a;padding:10px 14px;border-radius:12px;max-width:80%}
-#inp{display:flex;gap:10px;padding:15px;border-top:1px solid #222;background:#080808}
-#inp input{flex:1;background:#000;border:1px solid #333;color:#fff;padding:10px;border-radius:10px}
-#ctl{display:none;padding:15px;border-top:2px solid #00ff88;background:#111}
-#sec-lock{position:fixed;inset:0;background:#000;color:red;display:none;align-items:center;justify-content:center;z-index:9999;font-size:22px;text-align:center;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExGPT - Бесплатная нейросеть</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #loginScreen {
+            background: #1a1f3a;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+            border: 2px solid #00ffff;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        #loginScreen h1 {
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        #loginScreen p {
+            color: #00ff88;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #00ff88;
+        }
+
+        #loginScreen input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            background: #0a0e27;
+            color: #00ffff;
+            transition: all 0.3s;
+        }
+
+        #loginScreen input:focus {
+            outline: none;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        #loginScreen button {
+            width: 100%;
+            padding: 15px;
+            background: #0a0e27;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #loginScreen button:hover {
+            background: #00ffff;
+            color: #0a0e27;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        #chatScreen {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            flex-direction: column;
+            background: #0a0e27;
+        }
+
+        #chatHeader {
+            background: #1a1f3a;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            border-bottom: 2px solid #00ffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #chatHeader h1 {
+            color: #00ffff;
+            font-size: 1.8em;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        #chatHeader span {
+            color: #00ff88;
+            font-size: 14px;
+            text-shadow: 0 0 10px #00ff88;
+        }
+
+        #chatMessages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 15px;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: #1a1f3a;
+            color: #ff00ff;
+            border: 2px solid #ff00ff;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: #1a1f3a;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .message.system {
+            align-self: center;
+            background: #1a1f3a;
+            border: 2px solid #ffff00;
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.3);
+            color: #ffff00;
+            text-align: center;
+            font-weight: bold;
+            max-width: 80%;
+            text-shadow: 0 0 10px #ffff00;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            background: #1a1f3a;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            padding: 15px 20px;
+            border-radius: 15px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        #chatInput {
+            background: #1a1f3a;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            border-top: 2px solid #00ffff;
+            display: flex;
+            gap: 10px;
+        }
+
+        #chatInput input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #00ffff;
+            border-radius: 25px;
+            font-size: 16px;
+            background: #0a0e27;
+            color: #00ffff;
+        }
+
+        #chatInput input:focus {
+            outline: none;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        #chatInput button {
+            padding: 15px 30px;
+            background: #0a0e27;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        #chatInput button:hover {
+            background: #00ffff;
+            color: #0a0e27;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        #adminPanel {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            background: #0a0e27;
+            color: #00ffff;
+        }
+
+        #adminHeader {
+            background: #1a1f3a;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #ff00ff;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        }
+
+        #adminHeader h1 {
+            color: #ff00ff;
+            text-shadow: 0 0 20px #ff00ff;
+        }
+
+        #adminContent {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+
+        #usersList {
+            width: 300px;
+            background: #1a1f3a;
+            border-right: 2px solid #00ffff;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #00ffff;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #00ffff;
+        }
+
+        .user-item:hover {
+            background: #0a0e27;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .user-item.active {
+            background: #ff00ff;
+            color: #0a0e27;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+
+        #adminChatArea {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0a0e27;
+        }
+
+        #adminMessages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #adminControls {
+            background: #1a1f3a;
+            padding: 20px;
+            border-top: 2px solid #00ffff;
+        }
+
+        #adminControls input, #adminControls select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            background: #0a0e27;
+            color: #00ffff;
+            font-size: 14px;
+        }
+
+        #adminControls input:focus {
+            outline: none;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        #adminControls button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border: 2px solid;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: #0a0e27;
+        }
+
+        #adminControls button:hover {
+            box-shadow: 0 0 20px;
+        }
+
+        .btn-ai {
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+
+        .btn-ai:hover {
+            background: #00ffff;
+            color: #0a0e27;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .btn-system {
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+
+        .btn-system:hover {
+            background: #ffff00;
+            color: #0a0e27;
+            box-shadow: 0 0 20px #ffff00;
+        }
+
+        .btn-settings {
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+
+        .btn-settings:hover {
+            background: #ff00ff;
+            color: #0a0e27;
+            box-shadow: 0 0 20px #ff00ff;
+        }
+
+        #settingsPanel {
+            padding: 20px;
+            background: #0a0e27;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 2px solid #ff00ff;
+            display: none;
+        }
+
+        #settingsPanel label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #00ffff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0e27;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ffff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff00ff;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+    </style>
 </head>
 <body>
-
-<div id="sec-lock">SECURITY LOCKED<br>ACCESS TERMINATED</div>
-
-<div id="lock">
-  <div class="card">
-    <h3 style="color:#00ff88;margin-top:0">Secure Access</h3>
-    <input id="i1" placeholder="Identifier">
-    <input id="i2" type="password" placeholder="Key">
-    <button class="btn" onclick="LOGIN()">CONNECT</button>
-  </div>
-</div>
-
-<div id="app">
-  <div id="w">
-    <div id="side"></div>
-    <div id="main">
-      <div id="chat"></div>
-      <div id="inp">
-        <input id="m" placeholder="Message...">
-        <button class="btn" style="width:auto;padding:0 20px" onclick="SEND()">GO</button>
-      </div>
-      <div id="ctl">
-        <input id="b" placeholder="Target" style="background:#000;color:#fff;border:1px solid #333;padding:8px;border-radius:6px">
-        <button class="btn" style="width:auto;padding:8px 16px" onclick="BAN()">BAN</button>
-      </div>
+    <div id="loginScreen">
+        <h1>ExGPT</h1>
+        <p>Абсолютно бесплатная нейросеть</p>
+        <input type="text" id="nicknameInput" placeholder="Введите ваш ник (до 20 символов)" maxlength="20">
+        <button onclick="login()">Начать чат</button>
     </div>
-  </div>
-</div>
 
-<script>
-firebase.initializeApp({
-  apiKey: "AIzaSyAMz7N69qYWssb2KqsRAu79Km55tsJJa10",
-  databaseURL: "https://exgpttroll-default-rtdb.firebaseio.com"
-});
-const DB = firebase.database();
+    <div id="chatScreen">
+        <div id="chatHeader">
+            <h1 id="aiName">ExGPT</h1>
+            <span id="userNickname"></span>
+        </div>
+        <div id="chatMessages"></div>
+        <div id="chatInput">
+            <input type="text" id="messageInput" placeholder="Напишите сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()">Отправить</button>
+        </div>
+    </div>
 
-let USER="", CHAT=null, ADMIN=false, LOCKED=false;
+    <div id="adminPanel">
+        <div id="adminHeader">
+            <h1>🔥 АДМИН ПАНЕЛЬ 🔥</h1>
+            <button onclick="logout()" style="padding: 10px 20px; background: #ff00ff; color: #0a0e27; border: 2px solid #ff00ff; border-radius: 5px; cursor: pointer;">Выйти</button>
+        </div>
+        <div id="adminContent">
+            <div id="usersList"></div>
+            <div id="adminChatArea">
+                <div id="adminMessages"></div>
+                <div id="adminControls">
+                    <div id="settingsPanel">
+                        <label>Имя ИИ по умолчанию:</label>
+                        <input type="text" id="aiNameInput" placeholder="ExGPT" maxlength="20">
+                        <label>Цвет по умолчанию:</label>
+                        <input type="color" id="aiColorInput" value="#00ffff">
+                        <button class="btn-settings" onclick="saveSettings()">Сохранить настройки</button>
+                    </div>
+                    <button class="btn-settings" onclick="toggleSettings()">⚙️ Настройки по умолчанию</button>
+                    <input type="text" id="customNameInput" placeholder="Имя отправителя (оставь пустым для ExGPT)" maxlength="20">
+                    <input type="color" id="customColorInput" value="#00ffff">
+                    <input type="text" id="adminMessageInput" placeholder="Введите сообщение...">
+                    <button class="btn-ai" onclick="sendAsAI()">Отправить как ИИ</button>
+                    <button class="btn-system" onclick="sendAsSystem()">Отправить как Система</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-const A=[65,100,117,115,101,49,55];
-const P=[101,120,101,71,75,101,121,81];
-const STR=a=>a.map(x=>String.fromCharCode(x)).join("");
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, push, onChildAdded, set, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-function SECURITY_LOCK(){
-  if(LOCKED || ADMIN) return;
-  LOCKED=true;
-  document.getElementById("sec-lock").style.display="flex";
-}
+        const firebaseConfig = {
+            apiKey: "AIzaSyAh1SQUJrfxc0pQPYFj0OsE_LSQUDTerus",
+            authDomain: "exgpt-e1b27.firebaseapp.com",
+            databaseURL: "https://exgpt-e1b27-default-rtdb.firebaseio.com",
+            projectId: "exgpt-e1b27",
+            storageBucket: "exgpt-e1b27.firebasestorage.app",
+            messagingSenderId: "763978181578",
+            appId: "1:763978181578:web:8ca0c7328e87c4290bfd33"
+        };
 
-setInterval(()=>{
-  if(!ADMIN && Math.abs(window.outerWidth-window.innerWidth)>160){
-    SECURITY_LOCK();
-  }
-},1500);
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
-document.addEventListener("keydown",e=>{
-  if(ADMIN) return;
-  if(e.key==="F12" || (e.ctrlKey && e.shiftKey && ["I","J"].includes(e.key)) || (e.ctrlKey && e.key==="U")){
-    e.preventDefault();
-    SECURITY_LOCK();
-  }
-});
+        let currentUser = null;
+        let selectedUser = null;
+        let userId = null;
+        let aiName = 'ExGPT';
+        let aiColor = '#00ffff';
+        let isAdmin = false;
 
-function LOGIN(){
-  const u=i1.value.trim();
-  const p=i2.value;
-  if(!u||!p) return;
+        // Загрузка настроек
+        const settingsRef = ref(database, 'settings');
+        onValue(settingsRef, (snapshot) => {
+            const settings = snapshot.val();
+            if (settings) {
+                aiName = settings.aiName || 'ExGPT';
+                aiColor = settings.aiColor || '#00ffff';
+                document.getElementById('aiName').textContent = aiName;
+            }
+        });
 
-  DB.ref("bans/"+u).once("value",s=>{
-    if(s.exists()) return alert("ACCESS DENIED");
+        window.login = function() {
+            const nickname = document.getElementById('nicknameInput').value.trim();
+            if (!nickname) {
+                alert('Введите ник!');
+                return;
+            }
 
-    USER=u;
-    ADMIN=(u===STR(A) && p===STR(P));
+            currentUser = nickname;
+            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-    lock.style.display="none";
-    app.style.display="block";
+            if (nickname === 'A!') {
+                isAdmin = true;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadAdminPanel();
+            } else {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('chatScreen').style.display = 'flex';
+                document.getElementById('userNickname').textContent = nickname;
+                
+                // Отправляем приветственное сообщение
+                const userChatRef = ref(database, `chats/${userId}`);
+                push(userChatRef, {
+                    type: 'ai',
+                    text: 'Я ExGPT, готов отвечать на вопросы!',
+                    customName: 'ExGPT',
+                    customColor: '#00ffff',
+                    timestamp: Date.now()
+                });
 
-    if(ADMIN){
-      ctl.style.display="block";
-      LOAD_CHATS();
-    }else{
-      side.style.display="none";
-      CHAT=u;
-      LISTEN(u);
-      DB.ref("chats/"+u).once("value",x=>{
-        if(!x.exists()){
-          DB.ref("chats/"+u).push({s:"GPT",t:"Connection established."});
+                // Сохраняем информацию о пользователе
+                set(ref(database, `users/${userId}`), {
+                    nickname: nickname,
+                    timestamp: Date.now()
+                });
+
+                loadChat();
+            }
+        };
+
+        window.logout = function() {
+            location.reload();
+        };
+
+        window.sendMessage = function() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const userChatRef = ref(database, `chats/${userId}`);
+            push(userChatRef, {
+                type: 'user',
+                text: message,
+                timestamp: Date.now()
+            });
+
+            input.value = '';
+            showTypingIndicator();
+        };
+
+        function showTypingIndicator() {
+            removeTypingIndicator();
+            const messagesDiv = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.textContent = 'Ответ генерируется...';
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
-      });
-    }
-  });
-}
 
-function LOAD_CHATS(){
-  DB.ref("chats").on("value",s=>{
-    side.innerHTML="<div style='padding:10px;font-size:10px;color:#555'>ACTIVE</div>";
-    Object.keys(s.val()||{}).forEach(k=>{
-      const d=document.createElement("div");
-      d.className="tab"+(k===CHAT?" a":"");
-      d.textContent=k;
-      d.onclick=()=>{CHAT=k;LISTEN(k);LOAD_CHATS()};
-      side.appendChild(d);
-    });
-  });
-}
+        function removeTypingIndicator() {
+            const typingDiv = document.getElementById('typingIndicator');
+            if (typingDiv) {
+                typingDiv.remove();
+            }
+        }
 
-function LISTEN(c){
-  const win = document.getElementById("chat");
-  DB.ref("chats/"+c).off();
-  DB.ref("chats/"+c).on("value",s=>{
-    win.innerHTML="";
-    Object.values(s.val()||{}).forEach(m=>{
-      const d = document.createElement("div");
-      d.className="msg";
-      d.innerHTML="<b style='color:#00ff88'>"+m.s+":</b> "+m.t;
-      win.appendChild(d);
-    });
-    win.scrollTop=win.scrollHeight;
-  });
-}
+        function loadChat() {
+            const userChatRef = ref(database, `chats/${userId}`);
+            onChildAdded(userChatRef, (snapshot) => {
+                const msg = snapshot.val();
+                removeTypingIndicator();
+                displayMessage(msg.type, msg.text, msg.customName, msg.customColor);
+            });
+        }
 
-function SEND(){
-  if(!CHAT) return;
-  const t=m.value.trim();
-  if(!t) return;
-  DB.ref("chats/"+CHAT).push({s:ADMIN?"GPT":USER,t:t});
-  m.value="";
-}
+        function displayMessage(type, text, customName = null, customColor = null) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            if (type === 'ai') {
+                const senderDiv = document.createElement('div');
+                senderDiv.className = 'message-sender';
+                senderDiv.textContent = customName || aiName;
+                const color = customColor || aiColor;
+                senderDiv.style.color = color;
+                senderDiv.style.textShadow = `0 0 10px ${color}`;
+                messageDiv.appendChild(senderDiv);
+                
+                messageDiv.style.borderColor = color;
+                messageDiv.style.boxShadow = `0 0 15px ${color}40`;
+                messageDiv.style.color = color;
+            }
+            
+            const textDiv = document.createElement('div');
+            textDiv.textContent = text;
+            messageDiv.appendChild(textDiv);
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
 
-function BAN(){
-  if(!ADMIN) return;
-  const x=b.value.trim();
-  if(!x) return;
-  DB.ref("bans/"+x).set(true);
-  DB.ref("chats/"+x).remove();
-  alert("TARGET DISABLED");
-}
-</script>
+        // Админ функции
+        function loadAdminPanel() {
+            const usersRef = ref(database, 'users');
+            onValue(usersRef, (snapshot) => {
+                const users = snapshot.val();
+                updateUsersList(users);
+            });
+        }
+
+        function updateUsersList(users) {
+            const usersListDiv = document.getElementById('usersList');
+            usersListDiv.innerHTML = '';
+
+            if (!users) return;
+
+            Object.keys(users).forEach(uid => {
+                const user = users[uid];
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-item';
+                if (uid === selectedUser) {
+                    userDiv.classList.add('active');
+                }
+                userDiv.textContent = user.nickname;
+                userDiv.onclick = () => selectUser(uid, user.nickname);
+                usersListDiv.appendChild(userDiv);
+            });
+        }
+
+        function selectUser(uid, nickname) {
+            selectedUser = uid;
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.textContent === nickname) {
+                    item.classList.add('active');
+                }
+            });
+            loadAdminChat(uid);
+        }
+
+        function loadAdminChat(uid) {
+            const messagesDiv = document.getElementById('adminMessages');
+            messagesDiv.innerHTML = '';
+
+            const userChatRef = ref(database, `chats/${uid}`);
+            onChildAdded(userChatRef, (snapshot) => {
+                const msg = snapshot.val();
+                displayAdminMessage(msg.type, msg.text, msg.customName, msg.customColor);
+            });
+        }
+
+        function displayAdminMessage(type, text, customName = null, customColor = null) {
+            const messagesDiv = document.getElementById('adminMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            if (type === 'ai') {
+                const senderDiv = document.createElement('div');
+                senderDiv.className = 'message-sender';
+                senderDiv.textContent = customName || aiName;
+                const color = customColor || aiColor;
+                senderDiv.style.color = color;
+                senderDiv.style.textShadow = `0 0 10px ${color}`;
+                messageDiv.appendChild(senderDiv);
+                
+                messageDiv.style.borderColor = color;
+                messageDiv.style.boxShadow = `0 0 15px ${color}40`;
+                messageDiv.style.color = color;
+            }
+            
+            const textDiv = document.createElement('div');
+            textDiv.textContent = text;
+            messageDiv.appendChild(textDiv);
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        window.sendAsAI = function() {
+            if (!selectedUser) {
+                alert('Выберите пользователя!');
+                return;
+            }
+
+            const input = document.getElementById('adminMessageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const customName = document.getElementById('customNameInput').value.trim() || aiName;
+            const customColor = document.getElementById('customColorInput').value;
+
+            const userChatRef = ref(database, `chats/${selectedUser}`);
+            push(userChatRef, {
+                type: 'ai',
+                text: message,
+                customName: customName,
+                customColor: customColor,
+                timestamp: Date.now()
+            });
+
+            input.value = '';
+        };
+
+        window.sendAsSystem = function() {
+            if (!selectedUser) {
+                alert('Выберите пользователя!');
+                return;
+            }
+
+            const input = document.getElementById('adminMessageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const userChatRef = ref(database, `chats/${selectedUser}`);
+            push(userChatRef, {
+                type: 'system',
+                text: message,
+                timestamp: Date.now()
+            });
+
+            input.value = '';
+        };
+
+        window.toggleSettings = function() {
+            const panel = document.getElementById('settingsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        };
+
+        window.saveSettings = function() {
+            const newName = document.getElementById('aiNameInput').value.trim();
+            const newColor = document.getElementById('aiColorInput').value;
+
+            if (newName) aiName = newName;
+            aiColor = newColor;
+
+            set(ref(database, 'settings'), {
+                aiName: aiName,
+                aiColor: aiColor
+            });
+
+            alert('Настройки сохранены!');
+            toggleSettings();
+        };
+    </script>
 </body>
 </html>
